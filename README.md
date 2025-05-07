@@ -26,3 +26,16 @@ ajouterMedicament
 Aller sur Remix
 Cliquer sur Deploy and Remix pour déployer
 https://remix.ethereum.org/
+
+
+### Connecter
+```
+    seopiola: {
+      url:"https://sepolia.infura.io/v3/71a300bf32a24e07be782ad43a4e4ce1",
+      accounts: ["ee4211451ea59419e90eae9f59ca30a4529f3e193402f19552dadc104dcf134b"]
+    }
+```
+
+on lance avec la commande :
+npx hardhat node (pour démarrer je ne sais pas quoi)
+npx hardhat ignition deploy ignition/modules/DrugTracking.js
