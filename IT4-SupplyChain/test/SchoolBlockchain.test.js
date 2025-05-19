@@ -22,17 +22,14 @@ describe("SchoolBlockchain Suite", function () {
     beforeEach(async function () {
         [owner, hopital1, hopital2, patient1, patient2, auditeur1] = await ethers.getSigners();
 
-        const ManagerHopital = await ethers.getContractFactory("ManagerHopital");
-        managerHopital = await ManagerHopital.deploy();
-        await managerHopital.deployed();
+        const ManagerHopitalFactory = await ethers.getContractFactory("ManagerHopital");
+        managerHopital = await ManagerHopitalFactory.deploy();
 
-        const GestionDroitsPatient = await ethers.getContractFactory("GestionDroitsPatient");
-        gestionDroitsPatient = await GestionDroitsPatient.deploy(); // ownerContrat est owner
-        await gestionDroitsPatient.deployed();
+        const GestionDroitsPatientFactory = await ethers.getContractFactory("GestionDroitsPatient");
+        gestionDroitsPatient = await GestionDroitsPatientFactory.deploy(); 
 
-        const GestionAuditeurs = await ethers.getContractFactory("GestionAuditeurs");
-        gestionAuditeurs = await GestionAuditeurs.deploy(); // ownerContrat est owner
-        await gestionAuditeurs.deployed();
+        const GestionAuditeursFactory = await ethers.getContractFactory("GestionAuditeurs");
+        gestionAuditeurs = await GestionAuditeursFactory.deploy(); 
 
         // Configuration initiale : l'owner du ManagerHopital désigne un auditeur (adresse de l'auditeur1)
         // Et cet auditeur doit être enregistré dans GestionAuditeurs
@@ -82,7 +79,8 @@ describe("SchoolBlockchain Suite", function () {
         it("2.1 Doit permettre à un patient de contester une erreur médicale", async function () {
             // Enregistrer patient1
             await gestionDroitsPatient.connect(patient1).enregistrerPatient("Alice", "Patientia", "101 Main St");
-            expect(await gestionDroitsPatient.patients(patient1.address)).to.have.property('estEnregistre', true);
+            const patientInfo = await gestionDroitsPatient.patients(patient1.address);
+            expect(patientInfo[4]).to.equal(true); // Vérifie la valeur de estEnregistre à l'index 4
 
             // Enregistrer hopital1 pour la contestation
             await managerHopital.connect(hopital1).enregistrerHopital("Hopital de Test", "202 Test Ave");
