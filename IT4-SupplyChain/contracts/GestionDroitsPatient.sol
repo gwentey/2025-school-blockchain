@@ -95,31 +95,22 @@ contract GestionDroitsPatient {
         _ajouterPatient(msg.sender, _nom, _prenom, _adressePhysique);
     }
 
-    // MODIFIÉ: Permet à un patient de révoquer son propre enregistrement.
-    // Le patient (msg.sender) doit être enregistré.
+
     function revoquerPatient() public onlyPatientEnregistre {
         address patientARevoquer = msg.sender;
 
-        // Logique de suppression de la liste `listeAdressesPatients`
-        // Le modificateur onlyPatientEnregistre garantit que le patient existe et est dans la liste.
         uint indexASupprimer = patientIndexInList[patientARevoquer];
         
-        // Cette condition est une sécurité supplémentaire, bien que `onlyPatientEnregistre` implique que la liste n'est pas vide
-        // et que patientARevoquer y est.
         if (listeAdressesPatients.length > 0) {
             address dernierPatientDansListe = listeAdressesPatients[listeAdressesPatients.length - 1];
-            // Cas où le patient à supprimer n'est pas le dernier élément
             if (patientARevoquer != dernierPatientDansListe) {
                 listeAdressesPatients[indexASupprimer] = dernierPatientDansListe; 
                 patientIndexInList[dernierPatientDansListe] = indexASupprimer;
             }
-            // Dans tous les cas (seul élément, dernier élément, ou élément au milieu après swap), on retire le dernier.
             listeAdressesPatients.pop();
         }
 
-        // Marquer le patient comme non enregistré
         patients[patientARevoquer].estEnregistre = false; 
-        // Supprimer l'index de la liste pour cet ancien patient
         delete patientIndexInList[patientARevoquer];
 
         emit PatientRevoque(patientARevoquer, block.timestamp);
@@ -159,7 +150,7 @@ contract GestionDroitsPatient {
 
     function getErreursValideesParHopital(address _idHopital) external view returns (ErreurMedicale[] memory) {
         uint[] memory idsErreursPourHopital = erreursSoumisesParHopital[_idHopital];
-        ErreurMedicale[] memory erreursValidees = new ErreurMedicale[](idsErreursPourHopital.length); // Taille max potentielle
+        ErreurMedicale[] memory erreursValidees = new ErreurMedicale[](idsErreursPourHopital.length);
         uint compteurValidees = 0;
 
         for (uint i = 0; i < idsErreursPourHopital.length; i++) {
@@ -170,7 +161,6 @@ contract GestionDroitsPatient {
             }
         }
 
-        // Redimensionner le tableau pour n'inclure que les erreurs validées
         ErreurMedicale[] memory resultatFinal = new ErreurMedicale[](compteurValidees);
         for (uint i = 0; i < compteurValidees; i++) {
             resultatFinal[i] = erreursValidees[i];
@@ -179,15 +169,6 @@ contract GestionDroitsPatient {
         return resultatFinal;
     }
     
-    function getErreursMedicalesParPatient(address _idPatient) external view patientExiste(_idPatient) returns (ErreurMedicale[] memory) {
-        uint[] memory idsErreurs = erreursSoumisesParPatient[_idPatient];
-        ErreurMedicale[] memory erreursResultat = new ErreurMedicale[](idsErreurs.length);
-
-        for (uint i = 0; i < idsErreurs.length; i++) {
-            erreursResultat[i] = toutesLesErreurs[idsErreurs[i]];
-        }
-        return erreursResultat;
-    }
 
     function getPatientInfo(address _patientAddress) external view patientExiste(_patientAddress) returns (Patient memory) {
         return patients[_patientAddress];
@@ -197,11 +178,9 @@ contract GestionDroitsPatient {
         return listeAdressesPatients;
     }
 
-    // Fonction pour modifier le statut d'une erreur (par exemple, par un auditeur ou l'hôpital)
-    // Pour l'instant, supposons un rôle externe (non défini ici) ou l'ownerContrat pour la simplicité
-    function modifierStatutErreur(uint _idErreur, StatutErreur _nouveauStatut) external onlyOwnerContrat { // Pourrait être un autre rôle
+    // TODO
+    function modifierStatutErreur(uint _idErreur, StatutErreur _nouveauStatut) external onlyOwnerContrat {
         require(_idErreur < toutesLesErreurs.length, "ID Erreur invalide.");
-        // Ajouter plus de logique de validation si nécessaire (qui peut changer quel statut, etc.)
         toutesLesErreurs[_idErreur].statut = _nouveauStatut;
         emit StatutErreurModifie(_idErreur, _nouveauStatut, block.timestamp);
     }

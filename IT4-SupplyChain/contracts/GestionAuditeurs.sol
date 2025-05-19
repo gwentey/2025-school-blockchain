@@ -3,38 +3,38 @@ pragma solidity ^0.8.19;
 
 contract GestionAuditeurs {
 
-    address public ownerContrat; // Celui qui déploie le contrat et gère les auditeurs
+    address public ownerContrat; 
 
     struct Auditeur {
         string nom;
         string prenom;
-        string numeroAuditeur;    // Numéro d'identification professionnel
+        string numeroAuditeur;    
         string entreprise;
-        address adresseEthereum; // Adresse blockchain de l'auditeur
-        bool estActif;          // Statut de l'auditeur (actif/inactif)
+        address adresseEthereum;
+        bool estActif;         
     }
 
     mapping(address => Auditeur) public auditeurs;
-    mapping(string => address) private auditeurParNumero; // Pour vérifier l'unicité du numeroAuditeur
+    mapping(string => address) private auditeurParNumero; 
     address[] public listeAdressesAuditeursActifs;
-    mapping(address => uint) private auditeurIndexInList; // Pour aider à la suppression dans la liste des actifs
+    mapping(address => uint) private auditeurIndexInList; // pour la supression
 
     event AuditeurEnregistre(address indexed auditeurAddress, string numeroAuditeur, string nom, string entreprise, uint timestamp);
     event AuditeurModifie(address indexed auditeurAddress, bool estActif, uint timestamp);
     event AuditeurSupprime(address indexed auditeurAddress, uint timestamp); // Si suppression complète
 
     modifier onlyOwnerContrat() {
-        require(msg.sender == ownerContrat, "Reserv\u00e9 au propri\u00e9taire du contrat.");
+        require(msg.sender == ownerContrat, "Reserve au proprietaire du contrat.");
         _;
     }
 
     modifier auditeurExiste(address _auditeurAddress) {
-        require(auditeurs[_auditeurAddress].adresseEthereum != address(0), "L\'auditeur n\'existe pas.");
+        require(auditeurs[_auditeurAddress].adresseEthereum != address(0), "L auditeur n existe pas.");
         _;
     }
     
     modifier auditeurNExistePas(address _auditeurAddress) {
-        require(auditeurs[_auditeurAddress].adresseEthereum == address(0), "L\'auditeur existe d\u00e9j\u00e0 \u00e0 cette adresse.");
+        require(auditeurs[_auditeurAddress].adresseEthereum == address(0), "L auditeur existe deja a cette adresse.");
         _;
     }
 
@@ -51,9 +51,9 @@ contract GestionAuditeurs {
     ) external onlyOwnerContrat auditeurNExistePas(_auditeurAddress) {
         require(_auditeurAddress != address(0), "Adresse auditeur invalide.");
         require(bytes(_nom).length > 0, "Nom requis.");
-        require(bytes(_prenom).length > 0, "Pr\u00e9nom requis.");
-        require(bytes(_numeroAuditeur).length > 0, "Num\u00e9ro Auditeur requis.");
-        require(auditeurParNumero[_numeroAuditeur] == address(0), "Ce num\u00e9ro d\'auditeur est d\u00e9j\u00e0 utilis\u00e9.");
+        require(bytes(_prenom).length > 0, "Prenom requis.");
+        require(bytes(_numeroAuditeur).length > 0, "Numero Auditeur requis.");
+        require(auditeurParNumero[_numeroAuditeur] == address(0), "Ce numero d auditeur est deja utilise.");
 
         auditeurs[_auditeurAddress] = Auditeur({
             nom: _nom,
@@ -61,12 +61,11 @@ contract GestionAuditeurs {
             numeroAuditeur: _numeroAuditeur,
             entreprise: _entreprise,
             adresseEthereum: _auditeurAddress,
-            estActif: true // Actif par défaut lors de l'enregistrement
+            estActif: true
         });
 
         auditeurParNumero[_numeroAuditeur] = _auditeurAddress;
         
-        // Ajout à la liste des auditeurs actifs
         auditeurIndexInList[_auditeurAddress] = listeAdressesAuditeursActifs.length;
         listeAdressesAuditeursActifs.push(_auditeurAddress);
 
@@ -74,7 +73,7 @@ contract GestionAuditeurs {
     }
 
     function desactiverAuditeur(address _auditeurAddress) external onlyOwnerContrat auditeurExiste(_auditeurAddress) {
-        require(auditeurs[_auditeurAddress].estActif, "L\'auditeur est d\u00e9j\u00e0 inactif.");
+        require(auditeurs[_auditeurAddress].estActif, "L auditeur est deja inactif.");
         auditeurs[_auditeurAddress].estActif = false;
 
         // Supprimer de la liste des actifs
@@ -89,7 +88,7 @@ contract GestionAuditeurs {
     }
 
     function reactiverAuditeur(address _auditeurAddress) external onlyOwnerContrat auditeurExiste(_auditeurAddress) {
-        require(!auditeurs[_auditeurAddress].estActif, "L\'auditeur est d\u00e9j\u00e0 actif.");
+        require(!auditeurs[_auditeurAddress].estActif, "L auditeur est deja actif.");
         auditeurs[_auditeurAddress].estActif = true;
 
         // Ajouter à la liste des actifs
