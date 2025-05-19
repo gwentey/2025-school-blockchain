@@ -18,10 +18,6 @@ module.exports = {
     hardhatNetwork: {
       url:"http://127.0.0.1:8545",
       chainId: 31337,
-   },
-    sepolia: {
-      url:"https://sepolia.infura.io/v3/71a300bf32a24e07be782ad43a4e4ce1",
-      accounts:[PRIVATE_KEY]
-    }
+   }
   }
 };
