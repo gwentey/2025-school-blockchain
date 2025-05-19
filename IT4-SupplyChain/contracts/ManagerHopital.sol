@@ -117,7 +117,7 @@ contract ManagerHopital {
         if (_contestationValidee) {
             hopital.score -= 1;
             hopital.contestationsValideesCount += 1;
-            raison = "Contestation validée";
+            raison = "Contestation validee";
 
             // on rempalce notre fonction susprendreHopital par ce bloc 
             if (hopital.contestationsValideesCount > 5 && hopital.etat == EtatHopital.Actif) {
@@ -126,7 +126,7 @@ contract ManagerHopital {
             }
         } else {
             hopital.score += 1;
-            raison = "Contestation invalidée";
+            raison = "Contestation invalidee";
         }
 
         hopital.historiqueDesScores.push(hopital.score);

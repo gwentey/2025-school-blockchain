@@ -1,4 +1,5 @@
-require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-ethers");
+require("@nomicfoundation/hardhat-chai-matchers");
 require('dotenv').config();
 
 const SEPOLIA_URL = process.env.SEPOLIA_URL;

@@ -3,19 +3,19 @@ pragma solidity ^0.8.19;
 
 contract GestionDroitsPatient {
 
-    address public ownerContrat; 
+    address public ownerContrat; // Patient initial ou administrateur des patients
 
     struct Patient {
         string nom;
         string prenom;
-        address adresseEthereum; 
-        string adressePhysique;  
-        bool estEnregistre; 
+        address adresseEthereum; // Adresse blockchain du patient
+        string adressePhysique;  // Adresse de résidence du patient
+        bool estEnregistre;      // Pour marquer si le patient est actif/enregistré
     }
 
     enum StatutErreur {
         Soumise,
-        EnCoursDeValidation, // Par un auditeur externe par exemple
+        EnCoursDeValidation, 
         Validee,
         Invalidee,
         Resolue
@@ -23,57 +23,56 @@ contract GestionDroitsPatient {
 
     struct ErreurMedicale {
         uint idErreur;
-        address idHopital;       
-        address idPatient;   
-        uint date;            
+        address idHopital;       // Adresse du contrat de l'hopital
+        address idPatient;       // Adresse Ethereum du patient
+        uint date;               // Timestamp de la contestation
         string description;
         StatutErreur statut;
     }
 
     mapping(address => Patient) public patients;
-    address[] public listeAdressesPatients; // Pour lister les patients enregistrés
-    mapping(address => uint) private patientIndexInList; // Pour aider à la suppression dans listeAdressesPatients
+    address[] public listeAdressesPatients; 
+    mapping(address => uint) private patientIndexInList;
 
     uint public prochainIdErreur;
     ErreurMedicale[] public toutesLesErreurs;
 
-    mapping(address => uint[]) public erreursSoumisesParHopital; // Stocke les idErreur (index de toutesLesErreurs)
-    mapping(address => uint[]) public erreursSoumisesParPatient; // Stocke les idErreur (index de toutesLesErreurs)
+    mapping(address => uint[]) public erreursSoumisesParHopital; 
+    mapping(address => uint[]) public erreursSoumisesParPatient; 
 
-    event PatientEnregistre(address indexed patientAddress, string nom, string prenom, uint timestamp);
+    event PatientEnregistre(address indexed patientAddress, string nom, string prenom, bool estOwnerContrat, uint timestamp);
     event PatientRevoque(address indexed patientAddress, uint timestamp);
     event ErreurMedicaleContestee(uint indexed idErreur, address indexed idHopital, address indexed idPatient, string description, uint timestamp);
     event StatutErreurModifie(uint indexed idErreur, StatutErreur nouveauStatut, uint timestamp);
 
-// nos decorateurs qui check les droit 
     modifier onlyOwnerContrat() {
-        require(msg.sender == ownerContrat, "Reservé au propriétaire/administrateur du contrat patients.");
+        require(msg.sender == ownerContrat, "Action reservee au proprietaire du contrat.");
         _;
     }
 
     modifier onlyPatientEnregistre() {
-        require(patients[msg.sender].estEnregistre, "L'expéditeur doit être un patient enregistré.");
+        require(patients[msg.sender].estEnregistre, "Action reservee aux patients enregistres.");
         _;
     }
     
     modifier patientNonEnregistre(address _patientAddress) {
-        require(!patients[_patientAddress].estEnregistre, "Le patient est déjà enregistré.");
+        require(!patients[_patientAddress].estEnregistre, "Patient deja enregistre.");
         _;
     }
 
     modifier patientExiste(address _patientAddress) {
-        require(patients[_patientAddress].estEnregistre, "Le patient n'existe pas ou n'est pas enregistré.");
+        require(patients[_patientAddress].estEnregistre, "Patient non enregistre.");
         _;
     }
 
     constructor() {
-        ownerContrat = msg.sender;
+        ownerContrat = msg.sender; 
     }
 
     function _ajouterPatient(address _adresseEthereumPatient, string calldata _nom, string calldata _prenom, string calldata _adressePhysique) private patientNonEnregistre(_adresseEthereumPatient) {
         require(_adresseEthereumPatient != address(0), "Adresse patient invalide.");
         require(bytes(_nom).length > 0, "Nom requis.");
-        require(bytes(_prenom).length > 0, "Prénom requis.");
+        require(bytes(_prenom).length > 0, "Prenom requis.");
         
         patients[_adresseEthereumPatient] = Patient({
             nom: _nom,
@@ -86,38 +85,39 @@ contract GestionDroitsPatient {
         patientIndexInList[_adresseEthereumPatient] = listeAdressesPatients.length;
         listeAdressesPatients.push(_adresseEthereumPatient);
         
-        emit PatientEnregistre(_adresseEthereumPatient, _nom, _prenom, block.timestamp);
+        bool estOwner = (_adresseEthereumPatient == ownerContrat);
+        emit PatientEnregistre(_adresseEthereumPatient, _nom, _prenom, estOwner, block.timestamp);
     }
 
-    // Fonction pour que n'importe qui (nouveau patient) puisse s'enregistrer
     function enregistrerPatient(string calldata _nom, string calldata _prenom, string calldata _adressePhysique) external {
-        // Le msg.sender devient l'adresseEthereum du patient
         _ajouterPatient(msg.sender, _nom, _prenom, _adressePhysique);
     }
 
-
-    function revoquerPatient() public onlyPatientEnregistre {
-        address patientARevoquer = msg.sender;
-
-        uint indexASupprimer = patientIndexInList[patientARevoquer];
+    function ajouterPatientParOwner(address _adresseEthereumPatient, string calldata _nom, string calldata _prenom, string calldata _adressePhysique) external onlyOwnerContrat {
+        _ajouterPatient(_adresseEthereumPatient, _nom, _prenom, _adressePhysique);
+    }
+     
+    function revoquerPatient(address _patientAddress) external onlyOwnerContrat patientExiste(_patientAddress) {
+        require(_patientAddress != ownerContrat, "L owner du contrat ne peut pas etre revoque lui-meme.");
         
-        if (listeAdressesPatients.length > 0) {
+        uint indexASupprimer = patientIndexInList[_patientAddress];
+        if (listeAdressesPatients.length > 0) { // Sûreté, même si patientExiste devrait le garantir
             address dernierPatientDansListe = listeAdressesPatients[listeAdressesPatients.length - 1];
-            if (patientARevoquer != dernierPatientDansListe) {
-                listeAdressesPatients[indexASupprimer] = dernierPatientDansListe; 
-                patientIndexInList[dernierPatientDansListe] = indexASupprimer;
+            if (_patientAddress != dernierPatientDansListe) {
+                 listeAdressesPatients[indexASupprimer] = dernierPatientDansListe; 
+                 patientIndexInList[dernierPatientDansListe] = indexASupprimer;
             }
             listeAdressesPatients.pop();
         }
+        
+        patients[_patientAddress].estEnregistre = false; 
+        delete patientIndexInList[_patientAddress];
 
-        patients[patientARevoquer].estEnregistre = false; 
-        delete patientIndexInList[patientARevoquer];
-
-        emit PatientRevoque(patientARevoquer, block.timestamp);
+        emit PatientRevoque(_patientAddress, block.timestamp);
     }
 
     function contesterErreur(address _idHopital, string calldata _description) external onlyPatientEnregistre {
-        require(_idHopital != address(0), "ID Hôpital invalide.");
+        require(_idHopital != address(0), "ID Hopital invalide.");
         require(bytes(_description).length > 0, "Description requise.");
 
         uint erreurId = prochainIdErreur;
@@ -143,32 +143,44 @@ contract GestionDroitsPatient {
         ErreurMedicale[] memory erreursResultat = new ErreurMedicale[](idsErreurs.length);
 
         for (uint i = 0; i < idsErreurs.length; i++) {
-            erreursResultat[i] = toutesLesErreurs[idsErreurs[i]];
+            if (idsErreurs[i] < toutesLesErreurs.length) {
+                erreursResultat[i] = toutesLesErreurs[idsErreurs[i]];
+            }
         }
         return erreursResultat;
     }
 
     function getErreursValideesParHopital(address _idHopital) external view returns (ErreurMedicale[] memory) {
         uint[] memory idsErreursPourHopital = erreursSoumisesParHopital[_idHopital];
-        ErreurMedicale[] memory erreursValidees = new ErreurMedicale[](idsErreursPourHopital.length);
+        ErreurMedicale[] memory erreursValideesTemporaire = new ErreurMedicale[](idsErreursPourHopital.length);
         uint compteurValidees = 0;
 
         for (uint i = 0; i < idsErreursPourHopital.length; i++) {
             uint erreurId = idsErreursPourHopital[i];
             if (erreurId < toutesLesErreurs.length && toutesLesErreurs[erreurId].statut == StatutErreur.Validee) {
-                erreursValidees[compteurValidees] = toutesLesErreurs[erreurId];
+                erreursValideesTemporaire[compteurValidees] = toutesLesErreurs[erreurId];
                 compteurValidees++;
             }
         }
 
         ErreurMedicale[] memory resultatFinal = new ErreurMedicale[](compteurValidees);
         for (uint i = 0; i < compteurValidees; i++) {
-            resultatFinal[i] = erreursValidees[i];
+            resultatFinal[i] = erreursValideesTemporaire[i];
         }
-
         return resultatFinal;
     }
     
+    function getErreursMedicalesParPatient(address _idPatient) external view patientExiste(_idPatient) returns (ErreurMedicale[] memory) {
+        uint[] memory idsErreurs = erreursSoumisesParPatient[_idPatient];
+        ErreurMedicale[] memory erreursResultat = new ErreurMedicale[](idsErreurs.length);
+
+        for (uint i = 0; i < idsErreurs.length; i++) {
+            if (idsErreurs[i] < toutesLesErreurs.length) {
+                erreursResultat[i] = toutesLesErreurs[idsErreurs[i]];
+            }
+        }
+        return erreursResultat;
+    }
 
     function getPatientInfo(address _patientAddress) external view patientExiste(_patientAddress) returns (Patient memory) {
         return patients[_patientAddress];
@@ -178,10 +190,9 @@ contract GestionDroitsPatient {
         return listeAdressesPatients;
     }
 
-    // TODO
-    function modifierStatutErreur(uint _idErreur, StatutErreur _nouveauStatut) external onlyOwnerContrat {
+    function modifierStatutErreur(uint _idErreur, StatutErreur _nouveauStatut) external onlyOwnerContrat { 
         require(_idErreur < toutesLesErreurs.length, "ID Erreur invalide.");
         toutesLesErreurs[_idErreur].statut = _nouveauStatut;
         emit StatutErreurModifie(_idErreur, _nouveauStatut, block.timestamp);
     }
-} 
+}
