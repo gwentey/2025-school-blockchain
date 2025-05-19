@@ -1,0 +1,94 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Projet Blockchain: Gestion Décentralisée des Erreurs Médicales et de la Réputation
+
+Ce projet blockchain vise à créer un système décentralisé et transparent pour un réseau d'hôpitaux afin de gérer les erreurs médicales, les contestations de patients et la réputation des établissements.
+
+## Objectifs du Système
+
+Les objectifs principaux du système sont les suivants :
+
+* **Déclaration des erreurs médicales :** Les patients peuvent déclarer les erreurs médicales.
+* **Validation par les auditeurs :** Les auditeurs ont la capacité de valider ou de rejeter ces déclarations.
+* **Suspension automatique des hôpitaux :** Un hôpital peut être automatiquement suspendu s'il dépasse un seuil de 5 erreurs validées.
+* **Suivi de la réputation :** La réputation des hôpitaux doit être suivie et peut être modifiée en fonction des cas. Un système de score de réputation est crucial à cet effet.
+* **Historique complet :** Le système doit maintenir un historique complet des erreurs et de la réputation des hôpitaux.
+* **Système de score :** Utiliser un système d'attribution de score par réputation est important.
+
+## Règles et Fonctionnalités Clés des Contrats Intelligents
+
+Le projet implique le développement de plusieurs contrats intelligents pour gérer les différentes entités et processus. Votre IA devra développer les contrats suivants :
+
+### 1. `ManagerHopital.sol`
+
+* **But :** Gérer les informations et l'état des hôpitaux.
+* **Attributs (Structure Hôpital) :**
+    * `id` (identifiant unique)
+    * `nom`
+    * `adresse`
+    * `score` (initialisé à 0)
+    * `état` (initialisé à 'actif', peut passer à 'suspendu')
+* **Fonctions :**
+    * `enregistrerHopital()` : Permet à un hôpital de s'enregistrer une seule fois (`msg.sender`). Le `msg.sender` initial peut gérer l'ajout et la suppression d'autres hôpitaux.
+    * `suspendreHopital()` : Suspend automatiquement un hôpital si le nombre d'erreurs validées est > 5. Cette fonction est déclenchée par un auditeur.
+    * `mettreAJourScore()` : Modifie le score de l'hôpital (+1 ou -1). Déclenché par l'auditeur après validation/invalidation d'une contestation. Score diminue de 1 en cas de validation (-1), augmente de 1 en cas de non-validation (+1).
+    * `getHistoriqueScore()` : Renvoie l'historique des scores (tableau ou événement).
+
+### 2. Contrat pour la Gestion des Patients
+
+* **But :** Gérer les informations des patients et les déclarations d'erreurs médicales.
+* **Attributs (Structure Patient) :**
+    * `nom`
+    * `prénom`
+    * `adresse` (adresse blockchain 0x...)
+    * `adresse physique`
+* **Attributs (Structure Erreur Médicale) :**
+    * `identifiant de l'hôpital`
+    * `identifiant du patient`
+    * `date du jour` (timestamp)
+    * `description de la contestation`
+* **Fonctions :**
+    * Fonction d'enregistrement de patient : Permet d'enregistrer et d'ajouter d'autres patients via un modificateur. Le `msg.sender` initial est le patient principal.
+    * `révoquerPatient()` : Permet de révoquer un patient.
+    * `ContesterErreur()` : Permet à un patient de contester une erreur médicale.
+    * `getErreursParHopital()` : Retourne toutes les erreurs associées à un hôpital spécifique.
+
+### 3. Contrat pour les Auditeurs
+
+* **But :** Gérer les informations des auditeurs et le processus d'audit des erreurs.
+* **Attributs (Structure Auditeur) :**
+    * `nom`
+    * `prénom`
+    * `numéro Auditeur`
+    * `entreprise`
+    * `adresse` (adresse blockchain 0x...)
+* **Fonctions :**
+    * `AjouterAuditeur()` : Gérée par un modificateur. Le `msg.sender` est l'auditeur principal.
+    * `révoquerAuditeur()` : Permet de révoquer un auditeur.
+    * `auditerErreur()` : Permet d'auditer une erreur déclarée par un patient. Si validée, le score de l'hôpital est réduit de 1 (-1) ; si non validée, le score est augmenté de 1 (+1). Cette fonction doit également mettre à jour l'historique dans `ManagerHopital`.
+
+### 4. Contrat ou Fonction de Réputation Tracking
+
+* **But :** Suivre l'historique des erreurs validées et l'évolution du score de réputation.
+* **Fonctionnalités :**
+    * Historique des erreurs médicales validées par hôpital.
+    * Suivi de l'évolution de la réputation (score) dans le temps.
+
+## Tests Unitaires (avec Hardhat)
+
+Votre IA devra produire 5 tests unitaires au choix avec Hardhat, couvrant au minimum :
+
+* 1 test d'ajout d'hôpital
+* 1 test de suspension d'hôpital
+* 1 test de contestation d'erreur
+* 1 test d'audit d'erreur
+* 1 test de réputation
+
+---
+
+**Note concernant `.cursorrules` :**
+
+Le concept de `.cursorrules` n'est pas une convention standard dans le développement de smart contracts ou le prompting d'IA. Les règles et la logique du projet sont définies dans la structure et les fonctions des contrats intelligents décrits ci-dessus, ainsi que dans les exigences du projet détaillées dans le document fourni. Les informations ci-dessus servent de guide pour votre IA en structurant ces règles.
