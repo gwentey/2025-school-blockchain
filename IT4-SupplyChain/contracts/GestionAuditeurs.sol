@@ -98,7 +98,7 @@ contract GestionAuditeurs {
         emit AuditeurModifie(_auditeurAddress, true, block.timestamp);
     }
     
-    // Option pour supprimer complètement un auditeur (plus drastique que désactiver)
+    // por suprimer totalement
     function supprimerAuditeur(address _auditeurAddress) external onlyOwnerContrat auditeurExiste(_auditeurAddress) {
         if (auditeurs[_auditeurAddress].estActif) {
             // S'il est actif, le retirer de la liste des actifs d'abord

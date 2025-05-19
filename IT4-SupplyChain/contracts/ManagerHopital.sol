@@ -98,7 +98,7 @@ contract ManagerHopital {
         // Met à jour l'index du dernier élément (qui a été déplacé)
         hopitalIndexInList[dernierHopitalDansListe] = indexASupprimer;
 
-        // Supprime le dernier élément (qui est maintenant soit l'élément à supprimer, soit un duplicata)
+        // Supp le dernier élément
         listeHopitauxIds.pop();
 
         delete hopitaux[_idHopital];

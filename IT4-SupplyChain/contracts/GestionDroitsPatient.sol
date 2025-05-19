@@ -3,14 +3,14 @@ pragma solidity ^0.8.19;
 
 contract GestionDroitsPatient {
 
-    address public ownerContrat; // Patient initial ou administrateur des patients
+    address public ownerContrat; 
 
     struct Patient {
         string nom;
         string prenom;
-        address adresseEthereum; // Adresse blockchain du patient
-        string adressePhysique;  // Adresse de résidence du patient
-        bool estEnregistre;      // Pour marquer si le patient est actif/enregistré
+        address adresseEthereum; 
+        string adressePhysique; 
+        bool estEnregistre;      
     }
 
     enum StatutErreur {
@@ -23,9 +23,9 @@ contract GestionDroitsPatient {
 
     struct ErreurMedicale {
         uint idErreur;
-        address idHopital;       // Adresse du contrat de l'hopital
-        address idPatient;       // Adresse Ethereum du patient
-        uint date;               // Timestamp de la contestation
+        address idHopital;       
+        address idPatient;       
+        uint date;               
         string description;
         StatutErreur statut;
     }
@@ -101,7 +101,7 @@ contract GestionDroitsPatient {
         require(_patientAddress != ownerContrat, "L owner du contrat ne peut pas etre revoque lui-meme.");
         
         uint indexASupprimer = patientIndexInList[_patientAddress];
-        if (listeAdressesPatients.length > 0) { // Sûreté, même si patientExiste devrait le garantir
+        if (listeAdressesPatients.length > 0) { 
             address dernierPatientDansListe = listeAdressesPatients[listeAdressesPatients.length - 1];
             if (_patientAddress != dernierPatientDansListe) {
                  listeAdressesPatients[indexASupprimer] = dernierPatientDansListe; 
